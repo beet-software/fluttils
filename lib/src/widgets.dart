@@ -195,12 +195,12 @@ class OnDemandListView<T> extends StatelessWidget {
 
   /// Creates a on-demand [ListView] using each index and value from [values].
   const OnDemandListView.indexed(List<T> values,
-      {Widget Function(BuildContext, int, T) onBuild, bool shrinkWrap = false})
+      Widget Function(BuildContext, int, T) onBuild, {bool shrinkWrap = false})
       : this._(values, onBuild: onBuild, shrinkWrap: shrinkWrap);
 
   /// Creates a on-demand [ListView] using each value from [values].
   OnDemandListView.mapped(List<T> values,
-      {Widget Function(BuildContext, T) onBuild, bool shrinkWrap = false})
+      Widget Function(BuildContext, T) onBuild, {bool shrinkWrap = false})
       : this._(values,
             onBuild: (context, _, value) => onBuild(context, value),
             shrinkWrap: shrinkWrap);

@@ -58,6 +58,6 @@ class MyWidget extends StatelessWidget {
   final List<int> values = [1, 2, 3];
   @override
   Widget build(BuildContext context) =>
-    OnDemandListView.mapped(values, onBuild: (_, v) => Text("$v"));
+    OnDemandListView.mapped(values, (_, v) => Text("$v"));
 }
 ```
