@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2021-03-29
+### Added
+- `SimplePadding` widget
+- *example/README.md* file
+
+### Changed
+- Dialog functions now use `TextButton` instead of `FlatButton`
+- *README.md* examples now appears in *example/README.md* file
+
+
 ## [1.1.0] - 2021-03-29
 ### Changed
 - `onBuild` argument of `OnDemandListView` widget is now positional instead of named

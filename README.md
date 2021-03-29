@@ -7,57 +7,5 @@ rewriting them everytime you develop a new application.
 
 ## Examples
 
-This example uses a `Text` widget with some `TextStyle`.
-
-**Using Flutter:**
-
-```dart
-class MyWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) =>
-    Text(
-      "Hello world!",
-      style: TextStyle(
-        fontWeight: FontWeight.bold,
-        color: Colors.red,
-        fontSize: 24));
-}
-```
-
-**Using fluttils:**
-
-```dart
-class MyWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) =>
-    StyledText(
-      "Hello world!", 
-      [FontWeight.bold, Colors.red, 24]);
-}
-```
-
-This example uses a `ListView.builder` with a list of values.
-
-**Using Flutter:**
-
-```dart
-class MyWidget extends StatelessWidget {
-  final List<int> values = [1, 2, 3];
-  @override
-  Widget build(BuildContext context) =>
-    ListView.builder(
-      itemCount: values.length,
-      itemBuilder: (_, i) => Text("${values[i]}"));
-}
-```
-
-**Using fluttils:**
-
-```dart
-class MyWidget extends StatelessWidget {
-  final List<int> values = [1, 2, 3];
-  @override
-  Widget build(BuildContext context) =>
-    OnDemandListView.mapped(values, (_, v) => Text("$v"));
-}
-```
+See *example/README.md* for a list of examples and their respective Flutter 
+counterparts.

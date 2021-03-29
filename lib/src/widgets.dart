@@ -56,6 +56,29 @@ class StyledText extends Text {
       : super(text, style: _styleFrom(attributes));
 }
 
+Widget min(BuildContext context) {
+  return Scaffold(
+    body: Column(
+      children: [
+        // Equivalent to Text("color", style: TextStyle(color: Colors.red));
+        StyledText("color", [Colors.red]),
+        // Equivalent to Text("weight", style: TextStyle(fontWeight: FontWeight.bold));
+        StyledText("fontWeight", [FontWeight.bold]),
+        // Equivalent to Text("fontSize", style: TextStyle(fontSize: 24));
+        StyledText("fontSize", [24]),
+        // Equivalent to Text("fontStyle", style: TextStyle(fontStyle: FontStyle.italic));
+        StyledText("fontStyle", [FontStyle.italic]),
+        // Equivalent to Text("locale", style: TextStyle(locale: Locale("en", "US")));
+        StyledText("locale", [Locale("en", "US")]),
+        // Equivalent to Text("color && fontWeight", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold));
+        StyledText("color && fontWeight", [Colors.red, FontWeight.bold]),
+        // Equivalent to Text("fontSize && fontSize", style: TextStyle(fontSize: 16));
+        StyledText("fontSize && fontSize", [19, 16]),
+      ],
+    ),
+  );
+}
+
 /// A [FutureBuilder] that displays a progress indicator while its connection
 /// state is not done.
 ///
@@ -128,6 +151,95 @@ class SimpleStreamBuilder<T> extends StatelessWidget {
   }
 }
 
+/// A [Padding] that combines [EdgeInsets.only], [EdgeInsets.symmetric] and
+/// [EdgeInsets.all] as values.
+class SimplePadding extends Padding {
+  static EdgeInsetsGeometry _calculatePadding(List<double> heap) {
+    assert(heap.length == 7);
+    final List<double> values = [];
+    for (int i = heap.length - 4; i < heap.length; i++) {
+      int vi = i;
+      while (vi >= 0 && heap[vi] == null) {
+        if (vi == 0) {
+          vi = null;
+          break;
+        }
+        vi = (vi - 1) ~/ 2;
+      }
+
+      values.add(vi == null ? 0 : heap[vi]);
+    }
+
+    return EdgeInsets.only(
+      left: values[0],
+      right: values[1],
+      top: values[2],
+      bottom: values[3],
+    );
+  }
+
+  /// Creates a [SimplePadding].
+  ///
+  /// Parameters work as a tree-like structure, where [all] is the root node,
+  /// [width] and [height] are children of [all], [left] and [right] are children
+  /// of [width] and [top] and [bottom] are children of [height].
+  ///
+  /// To get the padding of a parameter, its value will be checked. If it's not
+  /// null, its value is returned, otherwise the padding of its parent will be
+  /// returned. If this parameter has no parent, its padding will be zero.
+  /// Using [left] as example:
+  ///
+  /// ```dart
+  /// double padding;
+  /// if (left == null) {
+  ///   // width is left's parent
+  ///   if (width == null) {
+  ///     // all is width's parent
+  ///     padding = all ?? 0;
+  ///   } else {
+  ///     padding = width;
+  ///   }
+  /// } else {
+  ///   padding = left;
+  /// }
+  /// left = padding;
+  /// ```
+  ///
+  /// That being said, the following usages are equivalent:
+  ///
+  /// ```
+  /// Padding p;
+  ///
+  /// p = SimplePadding(all: 5);
+  /// p = Padding(padding: EdgeInsets.all(5));
+  ///
+  /// p = SimplePadding(width: 2, height: 3);
+  /// p = Padding(padding: EdgeInsets.symmetric(horizontal: 2, vertical: 3));
+  ///
+  /// p = SimplePadding(left: 1, top: 4);
+  /// p = Padding(padding: EdgeInsets.only(left: 1, top: 4));
+  ///
+  /// p = SimplePadding(all: 5, right: 3);
+  /// p = Padding(padding: EdgeInsets.only(left: 5, right: 3, top: 5, bottom: 5));
+  ///
+  /// p = SimplePadding(all: 10, width: 20, top: 5);
+  /// p = Padding(padding: EdgeInsets.only(left: 20, top: 5, right: 20, bottom: 10));
+  /// ```
+  SimplePadding(
+      {@required Widget child,
+      double all,
+      double width,
+      double height,
+      double left,
+      double right,
+      double top,
+      double bottom})
+      : super(
+            child: child,
+            padding: _calculatePadding(
+                [all, width, height, left, right, top, bottom]));
+}
+
 /// A widget that hides or show a [child] widget.
 ///
 /// If [isVisible] is false, the size, state and animation of the widget will be
@@ -194,13 +306,15 @@ class OnDemandListView<T> extends StatelessWidget {
       : super(key: key);
 
   /// Creates a on-demand [ListView] using each index and value from [values].
-  const OnDemandListView.indexed(List<T> values,
-      Widget Function(BuildContext, int, T) onBuild, {bool shrinkWrap = false})
+  const OnDemandListView.indexed(
+      List<T> values, Widget Function(BuildContext, int, T) onBuild,
+      {bool shrinkWrap = false})
       : this._(values, onBuild: onBuild, shrinkWrap: shrinkWrap);
 
   /// Creates a on-demand [ListView] using each value from [values].
-  OnDemandListView.mapped(List<T> values,
-      Widget Function(BuildContext, T) onBuild, {bool shrinkWrap = false})
+  OnDemandListView.mapped(
+      List<T> values, Widget Function(BuildContext, T) onBuild,
+      {bool shrinkWrap = false})
       : this._(values,
             onBuild: (context, _, value) => onBuild(context, value),
             shrinkWrap: shrinkWrap);

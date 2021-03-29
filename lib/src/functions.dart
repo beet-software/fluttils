@@ -15,7 +15,7 @@ Future<void> showSimpleDialog(
           title: title,
           content: content,
           actions: [
-            FlatButton(
+            TextButton(
               onPressed: () => context.pop(),
               child: Text(positiveText),
             )
@@ -39,11 +39,11 @@ Future<bool> showBinaryDialog(
           title: title,
           content: content,
           actions: [
-            FlatButton(
+            TextButton(
               onPressed: () => context.pop(false),
               child: Text(negativeText),
             ),
-            FlatButton(
+            TextButton(
               onPressed: () => context.pop(true),
               child: Text(positiveText),
             ),
