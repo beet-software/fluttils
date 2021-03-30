@@ -1,5 +1,7 @@
 # fluttils
 
+[![Pub version](https://img.shields.io/pub/v/fluttils)](https://pub.dev/packages/fluttils) [![Pub points](https://badges.bar/fluttils/pub%20points)](https://pub.dev/packages/fluttils/score)
+
 fluttils is a package that helps you to write less code in your application
 by selecting some frequently-used patterns and extracting them into new classes
 or functions, avoiding you having to creating those patterns by yourself or
