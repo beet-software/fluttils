@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttils/fluttils.dart';
 
 /// A text that provides a [TextStyle] from a list of attributes.
 ///
@@ -52,31 +55,8 @@ class StyledText extends Text {
   /// If there are duplicated types in [attributes], the last one will be used.
   /// If there are unsupported types in [attributes] (such as boolean), they
   /// will be ignored.
-  StyledText(String text, List<Object> attributes)
-      : super(text, style: _styleFrom(attributes));
-}
-
-Widget min(BuildContext context) {
-  return Scaffold(
-    body: Column(
-      children: [
-        // Equivalent to Text("color", style: TextStyle(color: Colors.red));
-        StyledText("color", [Colors.red]),
-        // Equivalent to Text("weight", style: TextStyle(fontWeight: FontWeight.bold));
-        StyledText("fontWeight", [FontWeight.bold]),
-        // Equivalent to Text("fontSize", style: TextStyle(fontSize: 24));
-        StyledText("fontSize", [24]),
-        // Equivalent to Text("fontStyle", style: TextStyle(fontStyle: FontStyle.italic));
-        StyledText("fontStyle", [FontStyle.italic]),
-        // Equivalent to Text("locale", style: TextStyle(locale: Locale("en", "US")));
-        StyledText("locale", [Locale("en", "US")]),
-        // Equivalent to Text("color && fontWeight", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold));
-        StyledText("color && fontWeight", [Colors.red, FontWeight.bold]),
-        // Equivalent to Text("fontSize && fontSize", style: TextStyle(fontSize: 16));
-        StyledText("fontSize && fontSize", [19, 16]),
-      ],
-    ),
-  );
+  StyledText(String text, List<Object> attributes, {TextAlign align})
+      : super(text, style: _styleFrom(attributes), textAlign: align);
 }
 
 /// A [FutureBuilder] that displays a progress indicator while its connection
@@ -262,6 +242,71 @@ class SimpleVisibility extends StatelessWidget {
       maintainAnimation: true,
     );
   }
+}
+
+/// A splash screen used for loading purposes.
+///
+/// If [init] ends first than [duration], then the duration of the splash will
+/// be [duration], otherwise it will be the execution time of [init].
+///
+/// To just show some content, use [SimpleSplashScreen].
+class SplashScreen extends StatefulWidget {
+  /// The minimum duration of this splash.
+  final Duration duration;
+
+  /// The widget that will appear during the splash.
+  final Widget content;
+
+  /// The widget that will replace the splash after it's done.
+  final WidgetBuilder builder;
+
+  /// The initialization that should be done during the splash.
+  final Future<void> init;
+
+  const SplashScreen(
+      {Key key,
+      this.duration = const Duration(seconds: 3),
+      this.content,
+      this.builder,
+      @required this.init})
+      : super(key: key);
+
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: Future.wait([Future.delayed(widget.duration), widget.init]),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done)
+          asap(() => Navigator.of(context)
+              .pushReplacement(MaterialPageRoute(builder: widget.builder)));
+
+        return widget.content;
+      },
+    );
+  }
+}
+
+/// A simple splash screen that shows some content.
+///
+/// To use a splash screen for loading purposes, use [SplashScreen].
+class SimpleSplashScreen extends SplashScreen {
+  /// Creates a [SimpleSplashScreen].
+  SimpleSplashScreen(
+      {Key key,
+      Duration duration = const Duration(seconds: 3),
+      @required Widget content,
+      WidgetBuilder builder})
+      : super(
+            key: key,
+            duration: duration,
+            content: content,
+            builder: builder,
+            init: Future.delayed(Duration.zero));
 }
 
 /// A widget that hides the soft keyboard by clicking outside of a [TextField]
