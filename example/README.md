@@ -112,3 +112,38 @@ class MyWidget extends StatelessWidget {
   }
 }
 ```
+
+Using `SimpleStack`:
+
+```dart
+class MyWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    /*
+    Equivalent to:
+    
+    Stack(
+      children: [
+        Align(
+          alignment: Alignment.bottomRight,
+          child: FloatingActionButton(),
+        ),
+        Align(
+          alignment: Alignment.topCenter,
+          child: Text("Title"),
+        ),
+        Align(
+          alignment: Alignment.topLeft,
+          child: IconButton(icon: Icon(Icons.arrow_back)),
+        ),
+      ] 
+    );
+    */
+    return SimpleStack({
+      Alignment.bottomRight: FloatingActionButton(),
+      Alignment.topCenter: Text("Title"),
+      Alignment.topLeft: IconButton(icon: Icon(Icons.arrow_back)),
+    });
+  }
+}
+```
