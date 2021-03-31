@@ -23,7 +23,7 @@ import 'package:fluttils/fluttils.dart';
 /// ```
 class StyledText extends Text {
   static TextStyle _styleFrom(List<Object> attributes) {
-    final List<Object> args = List.generate(5, (_) => null);
+    final List<Object> args = List.generate(6, (_) => null);
     for (Object attribute in attributes) {
       int i;
       if (attribute is FontWeight)
@@ -36,6 +36,8 @@ class StyledText extends Text {
         i = 3;
       else if (attribute is Locale)
         i = 4;
+      else if (attribute is FontStyle)
+        i = 5;
       else
         continue;
 
@@ -45,9 +47,10 @@ class StyledText extends Text {
     return TextStyle(
       fontWeight: args[0] as FontWeight,
       color: args[1] as Color,
-      fontSize: (args[2] as num).toDouble(),
+      fontSize: (args[2] as num)?.toDouble(),
       decoration: args[3] as TextDecoration,
       locale: args[4] as Locale,
+      fontStyle: args[5] as FontStyle,
     );
   }
 
@@ -578,11 +581,11 @@ class SafeScaffold extends StatelessWidget {
 /// A [SizedBox] with only the height value set.
 class Height extends SizedBox {
   /// Creates a [Height] with size [value].
-  const Height(double value) : super(height: value);
+  const Height([double value]) : super(height: value);
 }
 
 /// A [SizedBox] with only the width value set.
 class Width extends SizedBox {
   /// Creates a [Width] with size [value].
-  const Width(double value) : super(width: value);
+  const Width([double value]) : super(width: value);
 }

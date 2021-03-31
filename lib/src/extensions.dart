@@ -7,7 +7,7 @@ extension BuildContextUtils<T> on BuildContext {
   MediaQueryData get _mediaQuery => MediaQuery.of(this);
 
   /// See `size` attribute of [MediaQueryData].
-  Size get size => _mediaQuery.size;
+  Size get screenSize => _mediaQuery.size;
 
   /// See `maybePop` method of [NavigatorState].
   void maybePop([T result]) => _navigator.maybePop(result);

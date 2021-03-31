@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > :warning: represents a breaking change
 
+## [1.4.2] - 2021-03-31
+### Added
+- `FontStyle` attribute to `StyledText`
+- Unit tests for `StyledText`, `SimplePadding`, `Width` and `Height`
+- Travis and Codecov badges to *README.md*
+
+### Changed
+- `value` parameter of `Width` and `Height` now is optional
+- `size` extension property of `BuildContextUtils` is now `screenSize`
+
+### Fixed
+- Not using the `fontSize` parameter of `StyledText` now is valid
+
+
 ## [1.4.1] - 2021-03-31
 ### Added
 - `physics` parameter to `OnDemandListView`

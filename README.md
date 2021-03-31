@@ -1,6 +1,6 @@
 # fluttils
 
-[![Pub version](https://img.shields.io/pub/v/fluttils)](https://pub.dev/packages/fluttils) [![Pub points](https://badges.bar/fluttils/pub%20points)](https://pub.dev/packages/fluttils/score)
+[![Pub version](https://img.shields.io/pub/v/fluttils)](https://pub.dev/packages/fluttils) [![Pub points](https://badges.bar/fluttils/pub%20points)](https://pub.dev/packages/fluttils/score) [![Travis](https://travis-ci.org/enzo-santos/fluttils.svg?branch=main)](https://travis-ci.org/github/enzo-santos/fluttils) [![codecov](https://codecov.io/gh/enzo-santos/fluttils/branch/main/graph/badge.svg)](https://codecov.io/gh/enzo-santos/fluttils)
 
 fluttils is a package that helps you to write less code in your application
 by selecting some frequently-used patterns and extracting them into new classes
