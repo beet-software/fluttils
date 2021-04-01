@@ -6,9 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > :warning: represents a breaking change
 
+## [1.4.4] - 2021-04-01
+### Added
+- More widget tests
+
+### Changed
+- :warning: `onBuild` parameter of `indexed` constructor of `OnDemandListView` is now positional 
+- Enforce widget types (`SimpleStreamBuilder` is now a `StreamBuilder`, `SimpleFutureBuilder` is
+  now a `FutureBuilder`)
+
+### Fixed
+- `SimpleStreamBuilder` now displays its progress indicator correctly
+
+
 ## [1.4.3] - 2021-03-31
 ### Added
-- More unit tests
+- More widget tests
 
 ### Changed
 - Enforce widget types (`SimpleStack` is now a `Stack`; `SafeScaffold` is now a `SafeArea`; 
@@ -22,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.4.2] - 2021-03-31
 ### Added
 - `FontStyle` attribute to `StyledText`
-- Unit tests for `StyledText`, `SimplePadding`, `Width` and `Height`
+- Widget tests for `StyledText`, `SimplePadding`, `Width` and `Height`
 - Travis and Codecov badges to *README.md*
 
 ### Changed
