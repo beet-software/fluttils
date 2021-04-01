@@ -31,7 +31,7 @@ Future<void> showSimpleDialog(
 /// [negativeText].
 Future<bool> showBinaryDialog(
     BuildContext context, Widget title, Widget content,
-    {String positiveText = "NO", String negativeText = "YES"}) async {
+    {String positiveText = "YES", String negativeText = "NO"}) async {
   return await showDialog(
       context: context,
       builder: (context) {

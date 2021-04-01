@@ -9,7 +9,7 @@ import 'utils.dart';
 
 void main() {
   // @formatter:off
-  final List<Case> cases = [
+  final List<TestCase> cases = [
     WidgetCase<Text, StyledText>({
       "empty": Comparison(StyledText(data, []), Text(data, style: TextStyle())),
       "color": Comparison(StyledText(data, [Colors.red]), Text(data, style: TextStyle(color: Colors.red))),
@@ -78,6 +78,10 @@ void main() {
     SimpleBuildersCase(),
     ListViewCase(),
     TapOutsideCase(),
+    NavigationCase(),
+    SplashScreenCase(),
+    DialogsCase(),
+    AsapCase(),
   ];
   // @formatter:on
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-@visibleForTesting
+typedef VoidBuilderCallback = void Function(BuildContext);
+
 class TestObserver extends NavigatorObserver {
   final void Function(Route, Route) onPushed;
   final void Function(Route, Route) onPopped;
@@ -26,7 +27,6 @@ class TestObserver extends NavigatorObserver {
       onReplaced?.call(newRoute, oldRoute);
 }
 
-@visibleForTesting
 class Pair<F, S> {
   final F first;
   final S second;
@@ -45,7 +45,6 @@ class Pair<F, S> {
   int get hashCode => first.hashCode ^ second.hashCode;
 }
 
-@visibleForTesting
 class Comparison<T> {
   final T actual;
   final T expected;
@@ -53,25 +52,20 @@ class Comparison<T> {
   const Comparison(this.actual, this.expected);
 }
 
-@visibleForTesting
 const String data = "a";
 
-@visibleForTesting
 Widget get dummy => SizedBox.shrink();
 
-@visibleForTesting
 Widget createApp(Widget child, [NavigatorObserver observer]) => MaterialApp(
     home: Scaffold(body: child),
     navigatorObservers: [if (observer != null) observer]);
 
-@visibleForTesting
 Set<Pair<Alignment, String>> decodeStack(Stack stack) {
   return stack.children.whereType<Align>().map((align) {
     return Pair(align.alignment as Alignment, (align.child as Text).data);
   }).toSet();
 }
 
-@visibleForTesting
 String decodeSafeScaffold(SafeArea area) {
   final Scaffold child = area.child as Scaffold;
   final Text grandchild = child.body as Text;

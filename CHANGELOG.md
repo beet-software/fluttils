@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > :warning: represents a breaking change
 
+## [1.4.5] - 2021-04-01
+### Added
+- More widget tests
+
+### Fixed
+- `positiveText` and `negativeText` default parameters of `showBinaryDialog` are now fixed
+
+
 ## [1.4.4] - 2021-04-01
 ### Added
 - More widget tests
