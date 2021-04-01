@@ -313,24 +313,14 @@ class SimplePadding extends Padding {
 ///    maintainAnimation: true,
 ///  );
 /// ```
-class SimpleVisibility extends StatelessWidget {
-  final Widget child;
-  final bool isVisible;
-
-  SimpleVisibility({Key key, this.isVisible = true, @required this.child})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    if (isVisible) return child;
-    return Visibility(
-      child: child,
-      visible: false,
-      maintainSize: true,
-      maintainState: true,
-      maintainAnimation: true,
-    );
-  }
+class SimpleVisibility extends Visibility {
+  const SimpleVisibility({bool isVisible = true, @required Widget child})
+      : super(
+            child: child,
+            visible: isVisible,
+            maintainSize: true,
+            maintainState: true,
+            maintainAnimation: true);
 }
 
 /// A [Stack] that can be created using a [Map].
@@ -365,24 +355,16 @@ class SimpleVisibility extends StatelessWidget {
 ///   ]
 /// );
 /// ```
-class SimpleStack extends StatelessWidget {
-  /// The map this stack will be based on.
-  final Map<Alignment, Widget> alignments;
-
+class SimpleStack extends Stack {
   /// Creates a [SimpleStack].
   ///
   /// Each key of the map will be the alignment of its respective widget in the
   /// stack.
-  const SimpleStack(this.alignments, {Key key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: alignments.entries
-          .map((entry) => Align(alignment: entry.key, child: entry.value))
-          .toList(),
-    );
-  }
+  SimpleStack(Map<Alignment, Widget> alignments)
+      : super(
+            children: alignments.entries
+                .map((entry) => Align(alignment: entry.key, child: entry.value))
+                .toList());
 }
 
 /// A splash screen used for loading purposes.
@@ -391,40 +373,25 @@ class SimpleStack extends StatelessWidget {
 /// be [duration], otherwise it will be the execution time of [init].
 ///
 /// To just show some content, use [SimpleSplashScreen].
-class SplashScreen extends StatelessWidget {
-  /// The minimum duration of this splash.
-  final Duration duration;
+class SplashScreen extends FutureBuilder<void> {
+  /// Creates a [SplashScreen].
+  ///
+  /// The minimum [duration] of this splash defaults to the recommended three
+  /// seconds.
+  SplashScreen(
+      {Duration duration = const Duration(seconds: 3),
+      Widget content,
+      WidgetBuilder builder,
+      Future<void> init})
+      : super(
+            future: Future.wait([Future.delayed(duration), init]),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done)
+                asap(() => Navigator.of(context)
+                    .pushReplacement(MaterialPageRoute(builder: builder)));
 
-  /// The widget that will appear during the splash.
-  final Widget content;
-
-  /// The widget that will replace the splash after it's done.
-  final WidgetBuilder builder;
-
-  /// The initialization that should be done during the splash.
-  final Future<void> init;
-
-  const SplashScreen(
-      {Key key,
-      this.duration = const Duration(seconds: 3),
-      this.content,
-      this.builder,
-      @required this.init})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Future.wait([Future.delayed(duration), init]),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done)
-          asap(() => Navigator.of(context)
-              .pushReplacement(MaterialPageRoute(builder: builder)));
-
-        return content;
-      },
-    );
-  }
+              return content;
+            });
 }
 
 /// A simple splash screen that shows some content.
@@ -433,12 +400,10 @@ class SplashScreen extends StatelessWidget {
 class SimpleSplashScreen extends SplashScreen {
   /// Creates a [SimpleSplashScreen].
   SimpleSplashScreen(
-      {Key key,
-      Duration duration = const Duration(seconds: 3),
+      {Duration duration = const Duration(seconds: 3),
       @required Widget content,
       WidgetBuilder builder})
       : super(
-            key: key,
             duration: duration,
             content: content,
             builder: builder,
@@ -481,101 +446,60 @@ class TapOutsideToUnfocus extends StatelessWidget {
 /// A [ListView] that creates its children on demand.
 ///
 /// It's equivalent to [ListView.builder].
-class OnDemandListView<T> extends StatelessWidget {
-  /// The original values to be transformed into children of this list.
-  final List<T> values;
-
-  /// The transform to be applied to each value in the [values], where
-  /// its arguments are the context, the index and the value.
-  final Widget Function(BuildContext, int, T) onBuild;
-
-  /// See `shrinkWrap` parameter of [ListView.builder].
-  final bool shrinkWrap;
-
-  /// See `physics` paramater of [ListView.builder].
-  final ScrollPhysics physics;
-
+class OnDemandListView<T> extends ListView {
   /// Creates a on-demand [ListView] from a list of widgets.
   static OnDemandListView<Widget> from(List<Widget> widgets,
           {bool shrinkWrap = false, ScrollPhysics physics}) =>
-      OnDemandListView._(widgets,
-          onBuild: (_, __, widget) => widget,
-          shrinkWrap: shrinkWrap,
-          physics: physics);
+      OnDemandListView.mapped(widgets, (_, widget) => widget,
+          shrinkWrap: shrinkWrap, physics: physics);
 
   /// Creates a on-demand [ListView] using each index and value from [values].
-  const OnDemandListView._(this.values,
-      {Key key, this.onBuild, this.shrinkWrap = false, this.physics})
-      : super(key: key);
-
-  /// Creates a on-demand [ListView] using each index and value from [values].
-  const OnDemandListView.indexed(
-      List<T> values, Widget Function(BuildContext, int, T) onBuild,
-      {bool shrinkWrap = false, ScrollPhysics physics})
-      : this._(values,
-            onBuild: onBuild, shrinkWrap: shrinkWrap, physics: physics);
+  ///
+  /// [onBuild] is the transform to be applied to each value in [values],
+  /// where its arguments are the context, the index and the value,
+  /// respectively.
+  OnDemandListView.indexed(List<T> values,
+      {Key key,
+      Widget Function(BuildContext, int, T) onBuild,
+      bool shrinkWrap = false,
+      ScrollPhysics physics})
+      : super.builder(
+            shrinkWrap: shrinkWrap,
+            physics: physics,
+            itemCount: values.length,
+            itemBuilder: (context, i) => onBuild(context, i, values[i]));
 
   /// Creates a on-demand [ListView] using each value from [values].
+  ///
+  /// [onBuild] is the transform to be applied to each value in [values],
+  /// where its arguments are the context and the value, respectively.
   OnDemandListView.mapped(
       List<T> values, Widget Function(BuildContext, T) onBuild,
       {bool shrinkWrap = false, ScrollPhysics physics})
-      : this._(values,
+      : this.indexed(values,
             onBuild: (context, _, value) => onBuild(context, value),
             shrinkWrap: shrinkWrap,
             physics: physics);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      shrinkWrap: shrinkWrap,
-      physics: physics,
-      itemCount: values.length,
-      itemBuilder: (context, i) => onBuild(context, i, values[i]),
-    );
-  }
 }
 
 /// A [Scaffold] wrapped in a [SafeArea].
 ///
 /// Useful when using [Scaffold] as root widget.
-class SafeScaffold extends StatelessWidget {
-  /// See [Scaffold.appBar].
-  final PreferredSizeWidget appBar;
-
-  /// See [Scaffold.backgroundColor].
-  final Color backgroundColor;
-
-  /// See [Scaffold.body].
-  final Widget body;
-
-  /// See [Scaffold.floatingActionBar].
-  final Widget floatingActionBar;
-
-  /// See [Scaffold.bottomNavigationBar].
-  final Widget bottomNavigationBar;
-
+class SafeScaffold extends SafeArea {
   /// Creates a [SafeScaffold] with some commonly used [Scaffold] parameters.
-  const SafeScaffold(
-      {Key key,
-      this.appBar,
-      this.backgroundColor,
-      this.body,
-      this.floatingActionBar,
-      this.bottomNavigationBar})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: appBar,
-        backgroundColor: backgroundColor,
-        body: body,
-        floatingActionButton: floatingActionBar,
-        bottomNavigationBar: bottomNavigationBar,
-      ),
-    );
-  }
+  SafeScaffold(
+      {PreferredSizeWidget appBar,
+      Color backgroundColor,
+      Widget body,
+      FloatingActionButton floatingActionButton,
+      Widget bottomNavigationBar})
+      : super(
+            child: Scaffold(
+                appBar: appBar,
+                backgroundColor: backgroundColor,
+                body: body,
+                floatingActionButton: floatingActionButton,
+                bottomNavigationBar: bottomNavigationBar));
 }
 
 /// A [SizedBox] with only the height value set.
