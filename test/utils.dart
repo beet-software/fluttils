@@ -45,11 +45,15 @@ class Pair<F, S> {
   int get hashCode => first.hashCode ^ second.hashCode;
 }
 
-class Comparison<T> {
-  final T actual;
-  final T expected;
+class ValueComparison<A, E> {
+  final A actual;
+  final E expected;
 
-  const Comparison(this.actual, this.expected);
+  const ValueComparison(this.actual, this.expected);
+}
+
+class TypeComparison<T> extends ValueComparison<T, T> {
+  const TypeComparison(T actual, T expected) : super(actual, expected);
 }
 
 const String data = "a";

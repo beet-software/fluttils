@@ -174,6 +174,88 @@ class SimpleStreamBuilder<T> extends StreamBuilder<T> {
             });
 }
 
+/// A [EdgeInsets] that combines the [EdgeInsets.only], [EdgeInsets.symmetric]
+/// and [EdgeInsets.all] constructors.
+///
+/// The following usages are equivalent:
+///
+/// ```dart
+/// SimpleEdgeInsets(all: 5);
+/// EdgeInsets.all(5);
+///
+/// SimpleEdgeInsets(width: 2, height: 3);
+/// EdgeInsets.symmetric(horizontal: 2, vertical: 3);
+///
+/// SimpleEdgeInsets(left: 1, top: 4);
+/// EdgeInsets.only(left: 1, top: 4);
+///
+/// SimpleEdgeInsets(all: 5, right: 3);
+/// EdgeInsets.only(left: 5, right: 3, top: 5, bottom: 5);
+///
+/// SimpleEdgeInsets(all: 10, width: 20, top: 5);
+/// EdgeInsets.only(left: 20, top: 5, right: 20, bottom: 10);
+/// ```
+class SimpleEdgeInsets extends EdgeInsets {
+  /// Parses a [[all, width, height, left, right, top, bottom]] into a [[left, right, top, bottom]] format.
+  static List<double> _parseLRTP(List<double> heap) {
+    assert(heap.length == 7);
+    final List<double> values = [];
+    for (int i = heap.length - 4; i < heap.length; i++) {
+      int vi = i;
+      while (vi >= 0 && heap[vi] == null) {
+        if (vi == 0) {
+          vi = null;
+          break;
+        }
+        vi = (vi - 1) ~/ 2;
+      }
+
+      values.add(vi == null ? 0 : heap[vi]);
+    }
+    return values;
+  }
+
+  SimpleEdgeInsets._(List<double> lrtb)
+      : super.only(
+            left: lrtb[0], right: lrtb[1], top: lrtb[2], bottom: lrtb[3]);
+
+  /// Creates a [SimpleEdgeInsets].
+  ///
+  /// Parameters work as a tree-like structure, where [all] is the root node,
+  /// [width] and [height] are children of [all], [left] and [right] are children
+  /// of [width] and [top] and [bottom] are children of [height].
+  ///
+  /// To get the padding of a parameter, its value will be checked. If it's not
+  /// null, its value is returned, otherwise the padding of its parent will be
+  /// returned. If this parameter has no parent, its padding will be zero.
+  /// Using [left] as example:
+  ///
+  /// ```dart
+  /// double padding;
+  /// if (left == null) {
+  ///   // width is left's parent
+  ///   if (width == null) {
+  ///     // all is width's parent
+  ///     padding = all ?? 0;
+  ///   } else {
+  ///     padding = width;
+  ///   }
+  /// } else {
+  ///   padding = left;
+  /// }
+  /// left = padding;
+  /// ```
+  SimpleEdgeInsets(
+      {double all,
+      double width,
+      double height,
+      double left,
+      double right,
+      double top,
+      double bottom})
+      : this._(_parseLRTP([all, width, height, left, right, top, bottom]));
+}
+
 /// A [Padding] that combines [EdgeInsets.only], [EdgeInsets.symmetric] and
 /// [EdgeInsets.all] as values.
 ///
@@ -196,30 +278,6 @@ class SimpleStreamBuilder<T> extends StreamBuilder<T> {
 /// Padding(padding: EdgeInsets.only(left: 20, top: 5, right: 20, bottom: 10));
 /// ```
 class SimplePadding extends Padding {
-  static EdgeInsetsGeometry _calculatePadding(List<double> heap) {
-    assert(heap.length == 7);
-    final List<double> values = [];
-    for (int i = heap.length - 4; i < heap.length; i++) {
-      int vi = i;
-      while (vi >= 0 && heap[vi] == null) {
-        if (vi == 0) {
-          vi = null;
-          break;
-        }
-        vi = (vi - 1) ~/ 2;
-      }
-
-      values.add(vi == null ? 0 : heap[vi]);
-    }
-
-    return EdgeInsets.only(
-      left: values[0],
-      right: values[1],
-      top: values[2],
-      bottom: values[3],
-    );
-  }
-
   /// Creates a [SimplePadding].
   ///
   /// Parameters work as a tree-like structure, where [all] is the root node,
@@ -257,8 +315,14 @@ class SimplePadding extends Padding {
       double bottom})
       : super(
             child: child,
-            padding: _calculatePadding(
-                [all, width, height, left, right, top, bottom]));
+            padding: SimpleEdgeInsets(
+                all: all,
+                width: width,
+                height: height,
+                left: left,
+                right: right,
+                top: top,
+                bottom: bottom));
 }
 
 /// A widget that hides or show a [child] widget.
@@ -478,4 +542,144 @@ class Height extends SizedBox {
 class Width extends SizedBox {
   /// Creates a [Width] with size [value].
   const Width([double value]) : super(width: value);
+}
+
+/// A group of widgets aligned in a given direction.
+///
+/// The following usages are equivalent:
+///
+/// ```dart
+/// Group(Axis.vertical, [], children: Text("A"))
+/// Column(children: Text("A"))
+///
+/// Group(Axis.horizontal, [], children: Text("A"))
+/// Row(children: Text("A"))
+///
+/// Group.col([])
+/// Column()
+///
+/// Group.row(MainAxisSize.min)
+/// Row(mainAxisSize: MainAxisSize.min)
+///
+/// Group.col([MainAxisSize.min, MainAxisAlignment.spaceBetween])
+/// Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween)
+///
+/// Group.row([MainAxisSize.max, CrossAxisAlignment.stretch], children: [Text("A"), Text("B")])
+/// Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.stretch, children: [Text("A"), Text("B")]
+/// ```
+class Group extends StatelessWidget {
+  /// The direction of this group of widget.
+  final Axis direction;
+
+  /// The setting(s) of this group object.
+  ///
+  /// If this value is a [List], the values in this list will be used as
+  /// settings. Otherwise, the value itself will be used as setting.
+  final Object attrs;
+
+  /// The children of this group.
+  final List<Widget> children;
+
+  /// Creates an array of [children] with the given [attrs] and [direction].
+  const Group(this.children, {@required this.direction, this.attrs = const []});
+
+  /// Creates a vertical array of [children] with the given [attrs].
+  const Group.col(List<Widget> children, {Object attrs})
+      : this(children, direction: Axis.vertical, attrs: attrs);
+
+  /// Creates a horizontal array of [children] with the given [attrs].
+  const Group.row(List<Widget> children, {Object attrs})
+      : this(children, direction: Axis.horizontal, attrs: attrs);
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Object> args = List.generate(6, (_) => null);
+    final List<Object> settings = attrs is List ? attrs : [attrs];
+    for (Object setting in settings) {
+      int i;
+      if (setting is MainAxisAlignment)
+        i = 0;
+      else if (setting is MainAxisSize)
+        i = 1;
+      else if (setting is CrossAxisAlignment)
+        i = 2;
+      else if (setting is TextDirection)
+        i = 3;
+      else if (setting is VerticalDirection)
+        i = 4;
+      else if (setting is TextBaseline)
+        i = 5;
+      else
+        continue;
+
+      args[i] = setting;
+    }
+
+    switch (direction) {
+      case Axis.horizontal:
+        return Row(
+          mainAxisAlignment: args[0] ?? MainAxisAlignment.start,
+          mainAxisSize: args[1] ?? MainAxisSize.max,
+          crossAxisAlignment: args[2] ?? CrossAxisAlignment.center,
+          textDirection: args[3],
+          verticalDirection: args[4] ?? VerticalDirection.down,
+          textBaseline: args[5] ?? TextBaseline.alphabetic,
+          children: children ?? [],
+        );
+      case Axis.vertical:
+        return Column(
+          mainAxisAlignment: args[0] ?? MainAxisAlignment.start,
+          mainAxisSize: args[1] ?? MainAxisSize.max,
+          crossAxisAlignment: args[2] ?? CrossAxisAlignment.center,
+          textDirection: args[3],
+          verticalDirection: args[4] ?? VerticalDirection.down,
+          textBaseline: args[5],
+          children: children ?? [],
+        );
+    }
+    return null;
+  }
+}
+
+/// A widget that intersperse a group of children with a separator.
+///
+/// This widget is equivalent to [ListView.separated], but (1) this widget is
+/// not scrollable and (2) the children of this widget are not generated on
+/// demand.
+///
+/// The following usages are equivalent:
+///
+/// ```dart
+/// Separated.col([], Divider())
+/// Column()
+///
+/// Separated.row([Text("1")], Divider())
+/// Row(children: [Text("1")])
+///
+/// Separated.col([Text("1"), Text("2")], Divider())
+/// Column(children: [Text("1"), Divider(), Text("2")])
+///
+/// Separated.row([Text("1"), Text("2"), Text("3")], Divider())
+/// Row(children: [Text("1"), Divider(), Text("2"), Divider(), Text("3")])
+/// ```
+class Separated extends Group {
+  static List<Widget> _separate(Widget separator, List<Widget> children) {
+    if (children.isEmpty) return [];
+    return List.generate(2 * children.length - 1,
+        (i) => i % 2 == 0 ? children[i ~/ 2] : separator);
+  }
+
+  /// Creates a interspersed, vertical array of [children] with a given
+  /// [separator].
+  ///
+  /// The [attrs] parameter has the same effect as passing it on [Group].
+  Separated.col(List<Widget> children, Widget separator, {Object attrs})
+      : super.col(_separate(separator, children), attrs: attrs);
+
+  /// Creates a interspersed, horizontal array of [children] with a given
+  /// [separator].
+  ///
+  /// The [attrs] parameter has the same effect as passing it on [Group].
+  Separated.row(List<Widget> children, Widget separator, {Object attrs})
+      : super.row(_separate(separator, children), attrs: attrs);
 }

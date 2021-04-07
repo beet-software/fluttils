@@ -7,6 +7,13 @@ import 'package:fluttils/fluttils.dart';
 
 import 'utils.dart';
 
+class Comparator<T> extends TypeComparison<T> {
+  const Comparator(T actual, T expected) : super(actual, expected);
+
+  void compareBy<R>(R Function(T) compare) =>
+      expect(compare(actual), compare(expected));
+}
+
 abstract class RunnableTest {
   void run();
 }
@@ -66,19 +73,49 @@ abstract class TestCase<T> implements RunnableTest {
   Future<void> onEntry(WidgetTester tester, T element);
 }
 
-class WidgetTest<T extends Widget, W extends T>
-    extends TestCase<Comparison<T>> {
-  final void Function(T, T) compare;
+class TypeTest<F, U extends F> extends TestCase<TypeComparison<F>> {
+  final void Function(F, F) compare;
 
-  WidgetTest(Map<String, Comparison<T>> cases, {this.compare})
-      : super(W.toString(), cases);
+  TypeTest(Map<String, TypeComparison<F>> cases, {this.compare})
+      : super("$U", cases);
 
   @override
-  Future<void> onEntry(WidgetTester tester, Comparison<T> comparison) async {
+  Future<void> onEntry(
+      WidgetTester tester, TypeComparison<F> comparison) async {
+    compare(comparison.actual, comparison.expected);
+  }
+}
+
+class WidgetTypeTest<F extends Widget, U extends F> extends TypeTest<F, U> {
+  WidgetTypeTest(Map<String, TypeComparison<F>> cases,
+      {void Function(F, F) compare})
+      : super(cases, compare: compare);
+
+  @override
+  Future<void> onEntry(
+      WidgetTester tester, TypeComparison<F> comparison) async {
     await tester.pumpWidget(createApp(comparison.actual));
     final Iterable<Element> elements =
-        find.byWidgetPredicate((widget) => widget is W).evaluate();
-    final T widget = elements.single.widget as T;
+        find.byWidgetPredicate((widget) => widget is U).evaluate();
+    final F widget = elements.single.widget as F;
+    compare(widget, comparison.expected);
+  }
+}
+
+class WidgetValueTest<F extends Widget, U extends Widget>
+    extends TestCase<ValueComparison<U, F>> {
+  final void Function(F, F) compare;
+
+  WidgetValueTest(Map<String, ValueComparison<U, F>> cases, {this.compare})
+      : super("$U:$F", cases);
+
+  @override
+  Future<void> onEntry(
+      WidgetTester tester, ValueComparison<U, F> comparison) async {
+    await tester.pumpWidget(createApp(comparison.actual));
+    final Iterable<Element> elements =
+        find.byWidgetPredicate((widget) => widget is F).evaluate();
+    final F widget = elements.single.widget as F;
     compare(widget, comparison.expected);
   }
 }

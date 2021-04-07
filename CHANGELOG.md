@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > :warning: represents a breaking change
 
+## [1.5.0] - 2021-04-07
+### Added
+- `Group` widget
+- `Separated` widget
+- `SimpleEdgeInsets` widget
+
+
 ## [1.4.5] - 2021-04-01
 ### Added
 - More widget tests
