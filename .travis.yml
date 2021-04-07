@@ -11,11 +11,13 @@ addons:
       - libstdc++6
 
 before_script:
-  - git clone https://github.com/flutter/flutter.git -b beta
-  - ./flutter/bin/flutter doctor
+  - git clone https://github.com/flutter/flutter.git -b stable
+  - cd flutter/
+  - git checkout v1.22.6
+  - ./bin/flutter doctor
 
 script:
-  - ./flutter/bin/flutter test --coverage
+  - ./bin/flutter test --coverage
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
