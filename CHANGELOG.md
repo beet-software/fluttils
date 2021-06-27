@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > :warning: represents a breaking change
 
+## [2.0.0] - 2021-06-27
+### Changed
+- Migrate to null-safety
+
+
 ## [1.5.0] - 2021-04-07
 ### Added
 - `Group` widget

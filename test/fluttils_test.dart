@@ -248,8 +248,8 @@ void main() {
     }),
     TestCaseGroup("BuildContextUtils", {
       "screenSize": (tester) async {
-        Size screenSize;
-        Size mediaSize;
+        Size? screenSize;
+        Size? mediaSize;
 
         // @formatter:off
         final Widget first = Scaffold(body: Builder(builder: (context) {
@@ -408,7 +408,7 @@ void main() {
         expect(find.text(data + data), findsNothing);
       },
       "pop:value": (tester) async {
-        bool popResult;
+        bool? popResult;
         int pushCount = 0;
         int popCount = 0;
 
@@ -444,7 +444,7 @@ void main() {
         expect(find.text(data + data), findsNothing);
       },
       "maybePop": (tester) async {
-        bool popResult;
+        bool? popResult;
         int pushCount = 0;
         int popCount = 0;
         int maybePopCount = 0;

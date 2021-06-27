@@ -10,20 +10,20 @@ extension BuildContextUtils<T> on BuildContext {
   Size get screenSize => _mediaQuery.size;
 
   /// See `maybePop` method of [NavigatorState].
-  void maybePop([T result]) => _navigator.maybePop(result);
+  void maybePop([T? result]) => _navigator.maybePop(result);
 
   /// See `pop` method of [NavigatorState].
-  void pop([T result]) => _navigator.pop(result);
+  void pop([T? result]) => _navigator.pop(result);
 
   /// See `push` and `pushReplacement` methods of [NavigatorState].
-  Future<T> push<T>(Widget widget, {bool replace = false}) async {
+  Future<T?> push<T>(Widget widget, {bool replace = false}) async {
     final MaterialPageRoute<T> mpr = MaterialPageRoute(builder: (_) => widget);
     if (replace) return await _navigator.pushReplacement(mpr);
     return await _navigator.push(mpr);
   }
 
   /// See `pushNamed` and `pushReplacementNamed` methods of [NavigatorState].
-  Future<T> pushNamed<T>(String routeName, {bool replace = false}) async {
+  Future<T?> pushNamed<T>(String routeName, {bool replace = false}) async {
     if (replace) return await _navigator.pushReplacementNamed(routeName);
     return await _navigator.pushNamed(routeName);
   }
