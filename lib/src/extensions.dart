@@ -1,23 +1,24 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as f;
 
-extension BuildContextUtils<T> on BuildContext {
-  NavigatorState get _navigator => Navigator.of(this);
+extension BuildContextUtils<T> on f.BuildContext {
+  f.NavigatorState get _navigator => f.Navigator.of(this);
 
-  MediaQueryData get _mediaQuery => MediaQuery.of(this);
+  f.MediaQueryData get _mediaQuery => f.MediaQuery.of(this);
 
-  /// See `size` attribute of [MediaQueryData].
-  Size get screenSize => _mediaQuery.size;
+  /// Corresponds to `size` attribute of [MediaQueryData].
+  f.Size get screenSize => _mediaQuery.size;
 
-  /// See `maybePop` method of [NavigatorState].
+  /// Corresponds to `maybePop` method of [NavigatorState].
   void maybePop([T? result]) => _navigator.maybePop(result);
 
-  /// See `pop` method of [NavigatorState].
+  /// Corresponds to `pop` method of [NavigatorState].
   void pop([T? result]) => _navigator.pop(result);
 
-  /// See `push` and `pushReplacement` methods of [NavigatorState].
-  Future<T?> push<T>(Widget widget, {bool replace = false}) async {
-    final MaterialPageRoute<T> mpr = MaterialPageRoute(builder: (_) => widget);
+  /// Corresponds to both `push` and `pushReplacement` methods of [NavigatorState].
+  Future<T?> push<T>(f.Widget widget, {bool replace = false}) async {
+    final f.MaterialPageRoute<T> mpr = f.MaterialPageRoute(
+      builder: (_) => widget,
+    );
     if (replace) return await _navigator.pushReplacement(mpr);
     return await _navigator.push(mpr);
   }

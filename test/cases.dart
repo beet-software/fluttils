@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fluttils/fluttils.dart';
+import 'package:fluttils/fluttils.dart' as f;
 
 import 'utils.dart';
 
@@ -210,10 +210,10 @@ class SplashScreenTest extends TestCase<SplashCaseSetup> {
     final Future<void> init = Future.delayed(setup.initValue);
 
     // @formatter:off
-    final Widget first = Scaffold(body: Text(data + data));
+    final Widget first = Text(data + data);
     final Widget splash = setup.isDefaultSplash
-        ? SplashScreen(content: Text(data), builder: (_) => first, init: init)
-        : SplashScreen(
+        ? f.SplashScreen(content: Text(data), builder: (_) => first, init: init)
+        : f.SplashScreen(
             duration: setup.splashValue,
             content: Text(data),
             builder: (_) => first,
@@ -227,8 +227,8 @@ class SplashScreenTest extends TestCase<SplashCaseSetup> {
     expect(find.text(data + data), findsNothing);
 
     await tester.pump(Duration(seconds: dr));
-    expect(find.text(data), findsOneWidget);
-    expect(find.text(data + data), findsNothing);
+    expect(find.text(data), findsNothing);
+    expect(find.text(data + data), findsOneWidget);
 
     await tester.pumpAndSettle();
     expect(find.text(data), findsNothing);
@@ -236,40 +236,12 @@ class SplashScreenTest extends TestCase<SplashCaseSetup> {
   }
 }
 
-class SimpleSplashScreenTest extends TestCase<int?> {
-  const SimpleSplashScreenTest(Map<String, int?> cases)
-      : super("SimpleSplashScreen", cases);
-
-  @override
-  Future<void> onEntry(WidgetTester tester, int? value) async {
-    final Duration? duration = value == null ? null : Duration(seconds: value);
-    final Widget first = Scaffold(body: Text(data + data));
-
-    // @formatter:off
-    final Widget splash = duration == null
-        ? SimpleSplashScreen(content: Text(data), builder: (_) => first)
-        : SimpleSplashScreen(
-            duration: duration, content: Text(data), builder: (_) => first);
-    // @formatter:on
-
-    await tester.pumpWidget(createApp(splash));
-
-    await tester.pump(duration ?? Duration(seconds: 3));
-    expect(find.text(data), findsOneWidget);
-    expect(find.text(data + data), findsNothing);
-
-    await tester.pumpAndSettle();
-    expect(find.text(data), findsNothing);
-    expect(find.text(data + data), findsOneWidget);
-  }
-}
-
-class SimpleDialogTest extends TestCase<String?> {
-  const SimpleDialogTest(Map<String, String?> cases)
+class SimpleDialogTest extends TestCase<String> {
+  const SimpleDialogTest(Map<String, String> cases)
       : super("showSimpleDialog", cases);
 
   @override
-  Future<void> onEntry(WidgetTester tester, String? positiveText) async {
+  Future<void> onEntry(WidgetTester tester, String positiveText) async {
     // @formatter:off
     await tester.pumpWidget(createApp(
       Scaffold(
@@ -277,19 +249,14 @@ class SimpleDialogTest extends TestCase<String?> {
           builder: (context) => TextButton(
             child: Text(data),
             onPressed: () async {
-              if (positiveText == null)
-                await showSimpleDialog(context, Text(data * 2), Text(data * 3));
-              else
-                await showSimpleDialog(context, Text(data * 2), Text(data * 3),
-                    positiveText: positiveText);
+              await f.showSimpleDialog(context, Text(data * 2), Text(data * 3),
+                  positiveText: positiveText);
             },
           ),
         ),
       ),
     ));
     // @formatter:on
-
-    positiveText ??= "OK";
 
     await tester.tap(find.text(data));
     await tester.pumpAndSettle();
@@ -304,10 +271,13 @@ class SimpleDialogTest extends TestCase<String?> {
 }
 
 class BinaryDialogCaseSetup {
-  final String? positiveText;
-  final String? negativeText;
+  final String positiveText;
+  final String negativeText;
 
-  const BinaryDialogCaseSetup({this.positiveText, this.negativeText});
+  const BinaryDialogCaseSetup({
+    required this.positiveText,
+    required this.negativeText,
+  });
 }
 
 class BinaryDialogTest extends TestCase<BinaryDialogCaseSetup> {
@@ -325,24 +295,10 @@ class BinaryDialogTest extends TestCase<BinaryDialogCaseSetup> {
           builder: (context) => TextButton(
             child: Text(data),
             onPressed: () async {
-              final bool cp = setup.positiveText == null;
-              final bool cn = setup.negativeText == null;
-              if (cp && cn)
-                popResult = await showBinaryDialog(
-                    context, Text(data * 2), Text(data * 3));
-              else if (cp)
-                popResult = await showBinaryDialog(
-                    context, Text(data * 2), Text(data * 3),
-                    negativeText: setup.negativeText);
-              else if (cn)
-                popResult = await showBinaryDialog(
-                    context, Text(data * 2), Text(data * 3),
-                    positiveText: setup.positiveText);
-              else
-                popResult = await showBinaryDialog(
-                    context, Text(data * 2), Text(data * 3),
-                    positiveText: setup.positiveText,
-                    negativeText: setup.negativeText);
+              popResult = await f.showBinaryDialog(
+                  context, Text(data * 2), Text(data * 3),
+                  positiveText: setup.positiveText,
+                  negativeText: setup.negativeText);
             },
           ),
         ),
@@ -350,8 +306,8 @@ class BinaryDialogTest extends TestCase<BinaryDialogCaseSetup> {
     ));
     // @formatter:on
 
-    final String positiveText = setup.positiveText ?? "YES";
-    final String negativeText = setup.negativeText ?? "NO";
+    final String positiveText = setup.positiveText;
+    final String negativeText = setup.negativeText;
 
     await tester.tap(find.text(data));
     await tester.pumpAndSettle();

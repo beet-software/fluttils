@@ -61,7 +61,7 @@ const String data = "a";
 Widget get dummy => SizedBox.shrink();
 
 Widget createApp(Widget child, [NavigatorObserver? observer]) => MaterialApp(
-    home: Scaffold(body: child),
+    home: child,
     navigatorObservers: [if (observer != null) observer]);
 
 Set<Pair<Alignment, String?>> decodeStack(Stack stack) {

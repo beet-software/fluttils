@@ -1,6 +1,6 @@
 name: fluttils
 description: A package that contains utility widgets and functions for Flutter.
-version: 2.0.0
+version: 4.0.0
 repository: https://github.com/enzo-santos/fluttils
 
 environment:
@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  provider: ^6.0.2
 
 dev_dependencies:
   flutter_test:

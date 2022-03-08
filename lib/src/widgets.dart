@@ -1,73 +1,106 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:fluttils/fluttils.dart';
+import 'package:flutter/material.dart' as f;
+import 'package:fluttils/src/models/async_result.dart';
+import 'package:provider/provider.dart';
 
-/// A [Text] that creates its [TextStyle] from a list of attributes.
+class _TextAttrs {
+  final f.TextStyle? style;
+  final f.TextAlign? textAlign;
+
+  const _TextAttrs.empty() : this(style: null, textAlign: null);
+
+  const _TextAttrs({required this.style, required this.textAlign});
+}
+
+/// A [f.Text] that populates its attributes from a list of attributes.
 ///
 /// The available attributes are color, fontWeight, fontSize, fontStyle,
-/// locale and decoration.
+/// locale, decoration and textAlign.
 ///
 /// The following usages are equivalent:
 ///
 /// ```dart
-/// StyledText("weight", [FontWeight.bold]);
-/// Text("weight", style: TextStyle(fontWeight: FontWeight.bold));
+/// < Text("only text")
+/// > Text("only text")
 ///
-/// StyledText("color and size", [Colors.red, 24]);
-/// Text("color and size", style: TextStyle(color: Colors.red, fontSize: 24));
+/// < Text("weight", [FontWeight.bold]);
+/// > Text("weight", style: TextStyle(fontWeight: FontWeight.bold));
 ///
-/// StyledText("duplicated style", [FontStyle.italic, FontStyle.normal]);
-/// Text("duplicated style", style: TextStyle(fontStyle: FontStyle.normal));
+/// < Text("color and size", [Colors.red, 24]);
+/// > Text("color and size", style: TextStyle(color: Colors.red, fontSize: 24));
+///
+/// < Text("duplicated style", [FontStyle.italic, FontStyle.normal]);
+/// > Text("duplicated style", style: TextStyle(fontStyle: FontStyle.normal));
 /// ```
-class StyledText extends Text {
-  static TextStyle _styleFrom(List<Object> attributes) {
-    final List<Object?> args = List.generate(6, (_) => null);
-    for (Object attribute in attributes) {
-      int i;
-      if (attribute is FontWeight)
-        i = 0;
-      else if (attribute is Color)
-        i = 1;
-      else if (attribute is num)
-        i = 2;
-      else if (attribute is TextDecoration)
-        i = 3;
-      else if (attribute is Locale)
-        i = 4;
-      else if (attribute is FontStyle)
-        i = 5;
-      else
-        continue;
+class Text extends f.StatelessWidget {
+  final String data;
+  final List<Object>? attributes;
 
-      args[i] = attribute;
-    }
-
-    return TextStyle(
-      fontWeight: args[0] as FontWeight?,
-      color: args[1] as Color?,
-      fontSize: (args[2] as num?)?.toDouble(),
-      decoration: args[3] as TextDecoration?,
-      locale: args[4] as Locale?,
-      fontStyle: args[5] as FontStyle?,
-    );
-  }
-
-  /// Creates a [StyledText].
+  /// Creates a [Text].
   ///
   /// If there are duplicated types in [attributes], the last one will be used.
   /// If there are unsupported types in [attributes] (such as boolean), they
   /// will be ignored.
-  StyledText(String text, List<Object> attributes, {TextAlign? align})
-      : super(text, style: _styleFrom(attributes), textAlign: align);
+  const Text(this.data, [this.attributes]);
+
+  @override
+  f.Widget build(f.BuildContext context) {
+    return Provider<_TextAttrs>(
+      create: (_) {
+        final List<Object>? attrs = attributes;
+        final List<Object?> args = List.generate(7, (_) => null);
+        if (attrs == null) return _TextAttrs.empty();
+        if (attrs.isEmpty)
+          return _TextAttrs(style: f.TextStyle(), textAlign: null);
+
+        for (Object attribute in attrs) {
+          final int? i = () {
+            if (attribute is f.FontWeight) return 0;
+            if (attribute is f.Color) return 1;
+            if (attribute is num) return 2;
+            if (attribute is f.TextDecoration) return 3;
+            if (attribute is f.Locale) return 4;
+            if (attribute is f.FontStyle) return 5;
+            if (attribute is f.TextAlign) return 6;
+          }();
+          if (i == null) continue;
+          args[i] = attribute;
+        }
+        final bool hasTextStyle = args.sublist(0, 6).any((v) => v != null);
+        return _TextAttrs(
+          style: !hasTextStyle
+              ? null
+              : f.TextStyle(
+                  fontWeight: args[0] as f.FontWeight?,
+                  color: args[1] as f.Color?,
+                  fontSize: (args[2] as num?)?.toDouble(),
+                  decoration: args[3] as f.TextDecoration?,
+                  locale: args[4] as f.Locale?,
+                  fontStyle: args[5] as f.FontStyle?,
+                ),
+          textAlign: args[6] as f.TextAlign?,
+        );
+      },
+      child: Consumer<_TextAttrs>(
+        builder: (context, attrs, _) {
+          final f.TextStyle? style = attrs.style;
+          final f.TextAlign? align = attrs.textAlign;
+          if (style == null && align == null) return f.Text(data);
+          if (style == null) return f.Text(data, textAlign: align);
+          if (align == null) return f.Text(data, style: style);
+          return f.Text(data, style: style, textAlign: align);
+        },
+      ),
+    );
+  }
 }
 
-/// A [FutureBuilder] that displays a progress indicator while its connection
+/// A [f.FutureBuilder] that displays a progress indicator while its connection
 /// state is not done.
 ///
-/// The widget provided by [builder] will only be displayed when the connection
-/// state is equal to [ConnectionState.done].
+/// The widget provided by [onDone] will only be displayed when the connection
+/// state is not [ConnectionState.waiting].
 ///
 /// The progress indicator can be changed using the [indicator] parameter
 /// (defaults to a centered [CircularProgressIndicator]).
@@ -75,63 +108,95 @@ class StyledText extends Text {
 /// The following usage
 ///
 /// ```dart
-/// SimpleFutureBuilder<int>(
+/// // fluttils:
+/// FutureBuilder<int>(
 ///   someFuture,
-///   builder: (_, data) => Text("value: $data"),
+///   onDone: (_, data) => Text("value: $data"),
 /// );
 /// ```
 ///
 /// is equivalent to
 ///
 /// ```dart
+/// // flutter:
 /// FutureBuilder<int>(
 ///   future: someFuture,
 ///   builder: (_, snapshot) {
-///     if (snapshot.connectionState != ConnectionState.done)
+///     if (snapshot.connectionState == ConnectionState.waiting)
 ///       return Center(child: CircularProgressIndicator());
-///     final int data = snapshot.data;
+///     final int data = snapshot.data!;
 ///     return Text("value: $data");
 ///   },
 /// );
 /// ```
-class SimpleFutureBuilder<T> extends FutureBuilder<T> {
-  /// Creates a [SimpleFutureBuilder] with some commonly used [FutureBuilder]
+class FutureBuilder<T> extends f.StatelessWidget {
+  static f.Widget _onErrorDefault(
+    f.BuildContext context,
+    Object error,
+    StackTrace stackTrace,
+  ) =>
+      f.ErrorWidget(error);
+
+  final Future<T> future;
+  final f.Widget Function(f.BuildContext, T) onDone;
+  final f.Widget Function(f.BuildContext, Object, StackTrace) onError;
+  final f.Widget indicator;
+  final T? initialData;
+
+  /// Creates a [FutureBuilder] with some commonly used [f.FutureBuilder]
   /// parameters.
   ///
-  /// The [indicator] widget will be displayed while the connection state is
-  /// not [ConnectionState.done]. The widget returned by [builder] will be
-  /// displayed when the connection state is [ConnectionState.done]. Its
-  /// parameters are the current [BuildContext] and the value generated by
-  /// [future], respectively.
-  SimpleFutureBuilder(Future<T> future,
-      {required Widget Function(BuildContext, T?) builder,
-      Widget indicator = const Center(child: CircularProgressIndicator()),
-      T? initialData})
-      : super(
-            initialData: initialData,
-            future: future,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done)
-                return indicator;
-              final T? data = snapshot.data;
-              return builder(context, data);
-            });
+  /// The widget returned by [onDone] will be displayed when the connection
+  /// state is [f.ConnectionState.done]. The [indicator] widget will be displayed
+  /// while the connection state is [f.ConnectionState.waiting]. If not provided,
+  /// a centered [f.CircularProgressIndicator] will be displayed. The widget
+  /// returned by [onError] will be displayed when the future completes with an
+  /// error. If not provided, an [f.ErrorWidget] will be displayed.
+  const FutureBuilder(
+    this.future, {
+    required this.onDone,
+    this.initialData,
+    this.onError = _onErrorDefault,
+    this.indicator = const f.Center(child: f.CircularProgressIndicator()),
+  });
+
+  @override
+  f.Widget build(f.BuildContext context) {
+    final T? initialData = this.initialData;
+    return f.FutureBuilder<AsyncResult>(
+      future: future
+          .then<AsyncResult>((value) => AsyncResult.complete(value: value))
+          .catchError((e, s) => AsyncResult.error(error: e, stackTrace: s)),
+      initialData:
+          initialData == null ? null : AsyncResult.complete(value: initialData),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == f.ConnectionState.waiting) {
+          return indicator;
+        }
+        final AsyncResult result = snapshot.data!;
+        return result.apply(AsyncResultWidgetBuilder(
+          onComplete: (value) => onDone(context, value as T),
+          onError: (e, s) => onError(context, e, s),
+        ));
+      },
+    );
+  }
 }
 
-/// A [StreamBuilder] that displays a progress indicator while its connection
+/// A [f.StreamBuilder] that displays a progress indicator while its connection
 /// state is waiting.
 ///
-/// The widget provided by [builder] will only be displayed when the connection
-/// state is equal to [ConnectionState.done], [ConnectionState.active] or
-/// [ConnectionState.none].
+/// The widget provided by [onData] will only be displayed when the connection
+/// state is equal to [f.ConnectionState.done] or [f.ConnectionState.active].
 ///
 /// The progress indicator can be changed using the [indicator] parameter
-/// (defaults to a centered [CircularProgressIndicator]).
+/// (defaults to a centered [f.CircularProgressIndicator]).
 ///
 /// The following usage
 ///
 /// ```dart
-/// SimpleStreamBuilder<int>(
+/// // fluttils:
+/// StreamBuilder<int>(
 ///   someStream,
 ///   builder: (_, data) => Text("value: $data"),
 /// );
@@ -140,6 +205,7 @@ class SimpleFutureBuilder<T> extends FutureBuilder<T> {
 /// is equivalent to
 ///
 /// ```dart
+/// // flutter:
 /// StreamBuilder<int>(
 ///   stream: someStream,
 ///   builder: (_, snapshot) {
@@ -150,77 +216,100 @@ class SimpleFutureBuilder<T> extends FutureBuilder<T> {
 ///   },
 /// );
 /// ```
-class SimpleStreamBuilder<T> extends StreamBuilder<T> {
-  /// Creates a [SimpleStreamBuilder] with some commonly used [StreamBuilder]
+class StreamBuilder<T> extends f.StatelessWidget {
+  static f.Widget _onErrorDefault(
+    f.BuildContext context,
+    Object error,
+    StackTrace stackTrace,
+  ) =>
+      f.ErrorWidget(error);
+
+  final Stream<T> stream;
+  final f.Widget Function(f.BuildContext, T) onData;
+  final f.Widget Function(f.BuildContext, Object, StackTrace) onError;
+  final f.Widget indicator;
+  final T? initialData;
+
+  /// Creates a [StreamBuilder] with some commonly used [f.StreamBuilder]
   /// parameters.
   ///
-  /// The [indicator] widget will be displayed while the connection state is
-  /// [ConnectionState.waiting]. The widget returned by [builder] will be
-  /// displayed when the connection state is no longer
-  /// [ConnectionState.waiting]. Its parameters are the current [BuildContext]
-  /// and the value generated by [stream], respectively.
-  SimpleStreamBuilder(Stream<T> stream,
-      {required Widget Function(BuildContext, T?) builder,
-      T? initialData,
-      Widget indicator = const Center(child: CircularProgressIndicator())})
-      : super(
-            initialData: initialData,
-            stream: stream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting)
-                return indicator;
-              final T? data = snapshot.data;
-              return builder(context, data);
-            });
+  /// The widget returned by [onData] will be displayed when the connection state
+  /// is not [f.ConnectionState.waiting]. The [indicator] widget will be displayed
+  /// while the connection state is [f.ConnectionState.waiting]. If not provided,
+  /// a centered [f.CircularProgressIndicator] will be displayed. The widget
+  /// returned by [onError] will be displayed when the future completes with an
+  /// error. If not provided, an [f.ErrorWidget] will be displayed.
+  const StreamBuilder(
+    this.stream, {
+    required this.onData,
+    this.initialData,
+    this.onError = _onErrorDefault,
+    this.indicator = const f.Center(child: f.CircularProgressIndicator()),
+  });
+
+  @override
+  f.Widget build(f.BuildContext context) {
+    final T? initialData = this.initialData;
+    return f.StreamBuilder<AsyncResult>(
+      stream: stream
+          .map<AsyncResult>((value) => AsyncResult.complete(value: value))
+          .handleError((e, s) => AsyncResult.error(error: e, stackTrace: s)),
+      initialData:
+          initialData == null ? null : AsyncResult.complete(value: initialData),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == f.ConnectionState.waiting) {
+          return indicator;
+        }
+        final AsyncResult result = snapshot.data!;
+        return result.apply(AsyncResultWidgetBuilder(
+          onComplete: (value) => onData(context, value as T),
+          onError: (e, s) => onError(context, e, s),
+        ));
+      },
+    );
+  }
 }
 
-/// A [EdgeInsets] that combines the [EdgeInsets.only], [EdgeInsets.symmetric]
-/// and [EdgeInsets.all] constructors.
+/// A [f.EdgeInsets] that combines the [f.EdgeInsets.only], [f.EdgeInsets.symmetric]
+/// and [f.EdgeInsets.all] constructors.
 ///
 /// The following usages are equivalent:
 ///
 /// ```dart
-/// SimpleEdgeInsets(all: 5);
+/// // fluttils:
+/// // flutter:
+///
+/// EdgeInsets(all: 5);
 /// EdgeInsets.all(5);
 ///
-/// SimpleEdgeInsets(width: 2, height: 3);
+/// EdgeInsets(width: 2, height: 3);
 /// EdgeInsets.symmetric(horizontal: 2, vertical: 3);
 ///
-/// SimpleEdgeInsets(left: 1, top: 4);
+/// EdgeInsets(left: 1, top: 4);
 /// EdgeInsets.only(left: 1, top: 4);
 ///
-/// SimpleEdgeInsets(all: 5, right: 3);
+/// EdgeInsets(all: 5, right: 3);
 /// EdgeInsets.only(left: 5, right: 3, top: 5, bottom: 5);
 ///
-/// SimpleEdgeInsets(all: 10, width: 20, top: 5);
+/// EdgeInsets(all: 10, width: 20, top: 5);
 /// EdgeInsets.only(left: 20, top: 5, right: 20, bottom: 10);
 /// ```
-class SimpleEdgeInsets extends EdgeInsets {
-  /// Parses a [[all, width, height, left, right, top, bottom]] into a [[left, right, top, bottom]] format.
-  static List<double> _parseLRTP(List<double?> heap) {
-    assert(heap.length == 7);
-
-    final List<double> values = [];
-    for (int i = heap.length - 4; i < heap.length; i++) {
-      int vi = i;
-      while (vi >= 0 && heap[vi] == null) {
-        if (vi == 0) {
-          vi = -1;
-          break;
-        }
-        vi = (vi - 1) ~/ 2;
+class EdgeInsets extends f.EdgeInsets {
+  static List<double> _parseLRTB(List<double?> awhlrtb) {
+    return List.generate(4, (i) {
+      int vi;
+      for (vi = i + 3; vi >= 0 && awhlrtb[vi] == null; vi = (vi - 1) ~/ 2) {
+        if (vi == 0) return 0;
       }
-
-      values.add(vi == -1 ? 0 : heap[vi]!);
-    }
-    return values;
+      return awhlrtb[vi]!;
+    });
   }
 
-  SimpleEdgeInsets._(List<double> lrtb)
-      : super.only(
-            left: lrtb[0], right: lrtb[1], top: lrtb[2], bottom: lrtb[3]);
+  EdgeInsets._(
+    List<double> lrtb,
+  ) : super.only(left: lrtb[0], right: lrtb[1], top: lrtb[2], bottom: lrtb[3]);
 
-  /// Creates a [SimpleEdgeInsets].
+  /// Creates an [EdgeInsets].
   ///
   /// Parameters work as a tree-like structure, where [all] is the root node,
   /// [width] and [height] are children of [all], [left] and [right] are children
@@ -246,39 +335,51 @@ class SimpleEdgeInsets extends EdgeInsets {
   /// }
   /// left = padding;
   /// ```
-  SimpleEdgeInsets(
-      {double? all,
-      double? width,
-      double? height,
-      double? left,
-      double? right,
-      double? top,
-      double? bottom})
-      : this._(_parseLRTP([all, width, height, left, right, top, bottom]));
+  EdgeInsets({
+    double? all,
+    double? width,
+    double? height,
+    double? left,
+    double? right,
+    double? top,
+    double? bottom,
+  }) : this._(_parseLRTB([all, width, height, left, right, top, bottom]));
 }
 
-/// A [Padding] that combines [EdgeInsets.only], [EdgeInsets.symmetric] and
-/// [EdgeInsets.all] as values.
+/// A [f.Padding] that combines [f.EdgeInsets.only], [f.EdgeInsets.symmetric] and
+/// [f.EdgeInsets.all] as values.
 ///
 /// The following usages are equivalent:
 ///
 /// ```dart
-/// SimplePadding(all: 5);
+/// /// fluttils:
+/// /// flutter:
+///
+/// Padding(all: 5);
 /// Padding(padding: EdgeInsets.all(5));
 ///
-/// SimplePadding(width: 2, height: 3);
+/// Padding(width: 2, height: 3);
 /// Padding(padding: EdgeInsets.symmetric(horizontal: 2, vertical: 3));
 ///
-/// SimplePadding(left: 1, top: 4);
+/// Padding(left: 1, top: 4);
 /// Padding(padding: EdgeInsets.only(left: 1, top: 4));
 ///
-/// SimplePadding(all: 5, right: 3);
+/// Padding(all: 5, right: 3);
 /// Padding(padding: EdgeInsets.only(left: 5, right: 3, top: 5, bottom: 5));
 ///
-/// SimplePadding(all: 10, width: 20, top: 5);
+/// Padding(all: 10, width: 20, top: 5);
 /// Padding(padding: EdgeInsets.only(left: 20, top: 5, right: 20, bottom: 10));
 /// ```
-class SimplePadding extends Padding {
+class Padding extends f.StatelessWidget {
+  final f.Widget child;
+  final double? all;
+  final double? width;
+  final double? height;
+  final double? left;
+  final double? right;
+  final double? top;
+  final double? bottom;
+
   /// Creates a [SimplePadding].
   ///
   /// Parameters work as a tree-like structure, where [all] is the root node,
@@ -305,25 +406,39 @@ class SimplePadding extends Padding {
   /// }
   /// left = padding;
   /// ```
-  SimplePadding(
-      {required Widget child,
-      double? all,
-      double? width,
-      double? height,
-      double? left,
-      double? right,
-      double? top,
-      double? bottom})
-      : super(
-            child: child,
-            padding: SimpleEdgeInsets(
-                all: all,
-                width: width,
-                height: height,
-                left: left,
-                right: right,
-                top: top,
-                bottom: bottom));
+  const Padding({
+    required this.child,
+    this.all,
+    this.width,
+    this.height,
+    this.left,
+    this.right,
+    this.top,
+    this.bottom,
+    f.Key? key,
+  }) : super(key: key);
+
+  @override
+  f.Widget build(f.BuildContext context) {
+    return Provider<EdgeInsets>(
+      create: (_) => EdgeInsets(
+        all: all,
+        width: width,
+        height: height,
+        left: left,
+        right: right,
+        top: top,
+        bottom: bottom,
+      ),
+      child: Consumer<EdgeInsets>(
+        builder: (context, insets, _) => f.Padding(
+          key: key,
+          padding: insets,
+          child: child,
+        ),
+      ),
+    );
+  }
 }
 
 /// A widget that hides or show a [child] widget.
@@ -334,36 +449,116 @@ class SimplePadding extends Padding {
 /// The following usage
 ///
 /// ```dart
-/// SimpleVisibility(child: Text("hidden"), isVisible: false);
+/// // fluttils:
+/// Visibility(child: Text("hidden"), visible: false, level: VisibilityLevel.size());
 /// ```
 ///
 /// is equivalent to
 ///
 /// ```dart
+/// // flutter:
 /// Visibility(
 ///    child: Text("hidden"),
 ///    visible: false,
-///    maintainSize: true,
 ///    maintainState: true,
 ///    maintainAnimation: true,
+///    maintainSize: true,
 ///  );
 /// ```
-class SimpleVisibility extends Visibility {
-  const SimpleVisibility({bool isVisible = true, required Widget child})
-      : super(
+class Visibility extends f.StatelessWidget {
+  final bool visible;
+  final VisibilityLevel level;
+  final f.Widget child;
+
+  const Visibility({
+    f.Key? key,
+    required this.child,
+    this.visible = true,
+    this.level = const VisibilityLevel.none(),
+  }) : super(key: key);
+
+  const Visibility.fromLevel({
+    f.Key? key,
+    required f.Widget child,
+    VisibilityLevel? level,
+  }) : this(
+            key: key,
             child: child,
-            visible: isVisible,
-            maintainSize: true,
-            maintainState: true,
-            maintainAnimation: true);
+            visible: level == null,
+            level: level ?? const VisibilityLevel.none());
+
+  @override
+  f.Widget build(f.BuildContext context) => f.Visibility(
+        key: key,
+        visible: visible,
+        child: child,
+        maintainState: level.maintainState,
+        maintainAnimation: level.maintainAnimation,
+        maintainSize: level.maintainSize,
+        maintainInteractivity: level.maintainInteractivity,
+        maintainSemantics: level.maintainSemantics,
+      );
 }
 
-/// A [Stack] that can be created using a [Map].
+/// Defines a configuration for [f.Visibility] that follows the rules defined by
+/// its constructor.
+class VisibilityLevel {
+  final bool maintainState;
+  final bool maintainAnimation;
+  final bool maintainSize;
+  final bool maintainSemantics;
+  final bool maintainInteractivity;
+
+  const VisibilityLevel._({
+    this.maintainState = false,
+    this.maintainAnimation = false,
+    this.maintainSize = false,
+    this.maintainSemantics = false,
+    this.maintainInteractivity = false,
+  });
+
+  /// Completely hides the widget.
+  const VisibilityLevel.none({
+    bool maintainState = false,
+  }) : this._(maintainState: maintainState);
+
+  /// Maintains the state of the widget.
+  ///
+  /// The [maintainAnimation] argument can only be set if [maintainState] is set.
+  const VisibilityLevel.state({
+    bool maintainAnimation = false,
+  }) : this._(maintainState: true, maintainAnimation: maintainAnimation);
+
+  /// Maintains the animation of the widget.
+  ///
+  /// The [maintainSize] argument can only be set if [maintainAnimation] is set.
+  const VisibilityLevel.animation({
+    bool maintainSize = false,
+  }) : this._(
+            maintainState: true,
+            maintainAnimation: true,
+            maintainSize: maintainSize);
+
+  /// Maintains the size of the widget.
+  ///
+  /// The [maintainSemantics] and [maintainInteractivity] arguments can only be set if [maintainSize] is set.
+  const VisibilityLevel.size({
+    bool maintainSemantics = false,
+    bool maintainInteractivity = false,
+  }) : this._(
+            maintainState: true,
+            maintainAnimation: true,
+            maintainSize: true,
+            maintainSemantics: maintainSemantics,
+            maintainInteractivity: maintainInteractivity);
+}
+
+/// A [f.Stack] that can be created using a [Map].
 ///
 /// The following usage
 ///
 /// ```dart
-/// SimpleStack({
+/// StackMap({
 ///   Alignment.bottomRight: FloatingActionButton(),
 ///   Alignment.topCenter: Text("Title"),
 ///   Alignment.topLeft: IconButton(icon: Icon(Icons.arrow_back)),
@@ -390,68 +585,92 @@ class SimpleVisibility extends Visibility {
 ///   ]
 /// );
 /// ```
-class SimpleStack extends Stack {
+class MapStack extends f.StatelessWidget {
+  final Map<f.Alignment, f.Widget> alignments;
+  final f.AlignmentDirectional alignment;
+  final f.Clip clipBehavior;
+  final f.StackFit fit;
+
   /// Creates a [SimpleStack].
   ///
   /// Each key of the map will be the alignment of its respective widget in the
   /// stack.
-  SimpleStack(Map<Alignment, Widget> alignments)
-      : super(
-            children: alignments.entries
-                .map((entry) => Align(alignment: entry.key, child: entry.value))
-                .toList());
+  const MapStack(
+    this.alignments, {
+    f.Key? key,
+    this.alignment = f.AlignmentDirectional.topStart,
+    this.clipBehavior = f.Clip.hardEdge,
+    this.fit = f.StackFit.loose,
+  }) : super(key: key);
+
+  @override
+  f.Widget build(f.BuildContext context) => f.Stack(
+        key: key,
+        alignment: alignment,
+        clipBehavior: clipBehavior,
+        fit: fit,
+        children: alignments.entries
+            .map((entry) => f.Align(alignment: entry.key, child: entry.value))
+            .toList(),
+      );
 }
 
 /// A splash screen used for loading purposes.
 ///
 /// If [init] ends first than [duration], then the duration of the splash will
 /// be [duration], otherwise it will be the execution time of [init].
-///
-/// To just show some content, use [SimpleSplashScreen].
-class SplashScreen extends FutureBuilder<void> {
+class SplashScreen extends f.StatelessWidget {
+  final Duration duration;
+  final f.Widget content;
+  final f.Widget Function(f.BuildContext) builder;
+  final Future<void> init;
+
   /// Creates a [SplashScreen].
   ///
-  /// The minimum [duration] of this splash defaults to the recommended three
-  /// seconds.
-  SplashScreen(
-      {Duration duration = const Duration(seconds: 3),
-      required Widget content,
-      required WidgetBuilder builder,
-      required Future<void> init})
-      : super(
-            future: Future.wait([Future.delayed(duration), init]),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done)
-                asap(() => Navigator.of(context)
-                    .pushReplacement(MaterialPageRoute(builder: builder)));
+  /// The minimum [duration] of this splash defaults to three seconds.
+  const SplashScreen({
+    f.Key? key,
+    required this.init,
+    required this.content,
+    required this.builder,
+    this.duration = const Duration(seconds: 3),
+  }) : super(key: key);
 
-              return content;
-            });
-}
-
-/// A simple splash screen that shows some content.
-///
-/// To use a splash screen for loading purposes, use [SplashScreen].
-class SimpleSplashScreen extends SplashScreen {
-  /// Creates a [SimpleSplashScreen].
-  SimpleSplashScreen(
-      {Duration duration = const Duration(seconds: 3),
-      required Widget content,
-      required WidgetBuilder builder})
-      : super(
-            duration: duration,
+  /// Creates a [SplashScreen] with no [duration].
+  ///
+  /// This means that [builder] will be called as soon as [init] completes.
+  const SplashScreen.short({
+    f.Key? key,
+    required Future<void> init,
+    required f.Widget content,
+    required f.Widget Function(f.BuildContext) builder,
+  }) : this(
+            key: key,
+            init: init,
             content: content,
             builder: builder,
-            init: Future.delayed(Duration.zero));
+            duration: Duration.zero);
+
+  @override
+  f.Widget build(f.BuildContext context) {
+    return FutureProvider<f.ConnectionState>(
+      initialData: f.ConnectionState.waiting,
+      create: (_) => Future.wait([Future.delayed(duration), init])
+          .then((_) => f.ConnectionState.done),
+      child: Consumer<f.ConnectionState>(
+        builder: (context, state, _) =>
+            state == f.ConnectionState.waiting ? content : builder(context),
+      ),
+    );
+  }
 }
 
-/// A widget that hides the soft keyboard by clicking outside of a [TextField]
-/// or anywhere on the screen.
+/// Hides the soft keyboard by clicking outside of a [TextField] or anywhere on the screen.
 ///
 /// The following usage
 ///
 /// ```dart
-/// TapOutsideToUnfocus(child: TextFormField());
+/// ContextUnfocuser(child: TextFormField());
 /// ```
 ///
 /// is equivalent to
@@ -462,192 +681,90 @@ class SimpleSplashScreen extends SplashScreen {
 ///   child: TextFormField(),
 /// );
 /// ```
-class TapOutsideToUnfocus extends StatelessWidget {
+class ContextUnfocuser extends f.StatelessWidget {
   /// The widget below this widget in the tree.
-  final Widget child;
+  final f.Widget child;
 
-  /// Creates a [TapOutsideToUnfocus].
-  const TapOutsideToUnfocus({Key? key, required this.child}) : super(key: key);
+  /// Creates a [ContextUnfocuser].
+  const ContextUnfocuser({f.Key? key, required this.child}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: child,
+  f.Widget build(f.BuildContext context) => f.GestureDetector(
+        onTap: () => f.FocusScope.of(context).unfocus(),
+        child: child,
+      );
+}
+
+/// A [f.ListView] that creates its children by a map function.
+///
+/// It's equivalent to [ListView.builder].
+class MappedListView<T> extends f.StatelessWidget {
+  final List<T> values;
+  final f.Widget Function(f.BuildContext, T) builder;
+  final bool shrinkWrap;
+  final f.ScrollPhysics? physics;
+
+  const MappedListView(
+    this.values, {
+    f.Key? key,
+    required this.builder,
+    this.shrinkWrap = false,
+    this.physics,
+  }) : super(key: key);
+
+  @override
+  f.Widget build(f.BuildContext context) => f.ListView.builder(
+        itemCount: values.length,
+        itemBuilder: (context, i) => builder(context, values[i]),
+        physics: physics,
+        shrinkWrap: shrinkWrap,
+      );
+}
+
+/// A [f.Scaffold] wrapped in a [f.SafeArea].
+///
+/// Useful when using [f.Scaffold] as root widget.
+class SafeScaffold extends f.StatelessWidget {
+  final f.PreferredSizeWidget? appBar;
+  final f.Color? backgroundColor;
+  final f.Widget? body;
+  final f.FloatingActionButton? floatingActionButton;
+  final f.Widget? bottomNavigationBar;
+
+  /// Creates a [SafeScaffold] with some commonly used [f.Scaffold] parameters.
+  const SafeScaffold({
+    this.appBar,
+    this.backgroundColor,
+    this.body,
+    this.floatingActionButton,
+    this.bottomNavigationBar,
+    f.Key? key,
+  }) : super(key: key);
+
+  @override
+  f.Widget build(f.BuildContext context) {
+    return f.SafeArea(
+      child: f.Scaffold(
+        appBar: appBar,
+        backgroundColor: backgroundColor,
+        body: body,
+        floatingActionButton: floatingActionButton,
+        bottomNavigationBar: bottomNavigationBar,
+      ),
     );
   }
 }
 
-/// A [ListView] that creates its children on demand.
-///
-/// It's equivalent to [ListView.builder].
-class OnDemandListView<T> extends ListView {
-  /// Creates a on-demand [ListView] from a list of widgets.
-  static OnDemandListView<Widget> from(List<Widget> widgets,
-          {bool shrinkWrap = false, ScrollPhysics? physics}) =>
-      OnDemandListView.mapped(widgets, (_, widget) => widget,
-          shrinkWrap: shrinkWrap, physics: physics);
-
-  /// Creates a on-demand [ListView] using each index and value from [values].
-  ///
-  /// [onBuild] is the transform to be applied to each value in [values],
-  /// where its arguments are the context, the index and the value,
-  /// respectively.
-  OnDemandListView.indexed(
-      List<T> values, Widget Function(BuildContext, int, T) onBuild,
-      {bool shrinkWrap = false, ScrollPhysics? physics})
-      : super.builder(
-            shrinkWrap: shrinkWrap,
-            physics: physics,
-            itemCount: values.length,
-            itemBuilder: (context, i) => onBuild(context, i, values[i]));
-
-  /// Creates a on-demand [ListView] using each value from [values].
-  ///
-  /// [onBuild] is the transform to be applied to each value in [values],
-  /// where its arguments are the context and the value, respectively.
-  OnDemandListView.mapped(
-      List<T> values, Widget Function(BuildContext, T) onBuild,
-      {bool shrinkWrap = false, ScrollPhysics? physics})
-      : this.indexed(values, (context, _, value) => onBuild(context, value),
-            shrinkWrap: shrinkWrap, physics: physics);
-}
-
-/// A [Scaffold] wrapped in a [SafeArea].
-///
-/// Useful when using [Scaffold] as root widget.
-class SafeScaffold extends SafeArea {
-  /// Creates a [SafeScaffold] with some commonly used [Scaffold] parameters.
-  SafeScaffold(
-      {PreferredSizeWidget? appBar,
-      Color? backgroundColor,
-      Widget? body,
-      FloatingActionButton? floatingActionButton,
-      Widget? bottomNavigationBar})
-      : super(
-            child: Scaffold(
-                appBar: appBar,
-                backgroundColor: backgroundColor,
-                body: body,
-                floatingActionButton: floatingActionButton,
-                bottomNavigationBar: bottomNavigationBar));
-}
-
-/// A [SizedBox] with only the height value set.
-class Height extends SizedBox {
+/// A [f.SizedBox] with only the height value set.
+class Height extends f.SizedBox {
   /// Creates a [Height] with size [value].
-  const Height([double? value]) : super(height: value);
+  const Height([double value = 0]) : super(height: value);
 }
 
-/// A [SizedBox] with only the width value set.
-class Width extends SizedBox {
+/// A [f.SizedBox] with only the width value set.
+class Width extends f.SizedBox {
   /// Creates a [Width] with size [value].
-  const Width([double? value]) : super(width: value);
-}
-
-/// A group of widgets aligned in a given direction.
-///
-/// The following usages are equivalent:
-///
-/// ```dart
-/// Group(Axis.vertical, [], children: Text("A"))
-/// Column(children: Text("A"))
-///
-/// Group(Axis.horizontal, [], children: Text("A"))
-/// Row(children: Text("A"))
-///
-/// Group.col([])
-/// Column()
-///
-/// Group.row(MainAxisSize.min)
-/// Row(mainAxisSize: MainAxisSize.min)
-///
-/// Group.col([MainAxisSize.min, MainAxisAlignment.spaceBetween])
-/// Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween)
-///
-/// Group.row([MainAxisSize.max, CrossAxisAlignment.stretch], children: [Text("A"), Text("B")])
-/// Row(mainAxisSize: MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.stretch, children: [Text("A"), Text("B")]
-/// ```
-class Group extends StatelessWidget {
-  /// The direction of this group of widget.
-  final Axis direction;
-
-  /// The setting(s) of this group object.
-  ///
-  /// If this value is a [List], the values in this list will be used as
-  /// settings. Otherwise, the value itself will be used as setting.
-  final Object attrs;
-
-  /// The children of this group.
-  final List<Widget> children;
-
-  /// Creates an array of [children] with the given [attrs] and [direction].
-  const Group(this.children, {required this.direction, Object? attrs})
-      : this.attrs = attrs ?? const [];
-
-  /// Creates a vertical array of [children] with the given [attrs].
-  const Group.col(List<Widget> children, {Object? attrs})
-      : this(children, direction: Axis.vertical, attrs: attrs);
-
-  /// Creates a horizontal array of [children] with the given [attrs].
-  const Group.row(List<Widget> children, {Object? attrs})
-      : this(children, direction: Axis.horizontal, attrs: attrs);
-
-  @override
-  Widget build(BuildContext context) {
-    final List<Object?> args = List.generate(6, (_) => null);
-    final List<Object> settings =
-        attrs is List ? List.from(attrs as List) : [attrs];
-
-    for (Object setting in settings) {
-      int i;
-      if (setting is MainAxisAlignment)
-        i = 0;
-      else if (setting is MainAxisSize)
-        i = 1;
-      else if (setting is CrossAxisAlignment)
-        i = 2;
-      else if (setting is TextDirection)
-        i = 3;
-      else if (setting is VerticalDirection)
-        i = 4;
-      else if (setting is TextBaseline)
-        i = 5;
-      else
-        continue;
-
-      args[i] = setting;
-    }
-
-    switch (direction) {
-      case Axis.horizontal:
-        return Row(
-          mainAxisAlignment:
-              (args[0] as MainAxisAlignment?) ?? MainAxisAlignment.start,
-          mainAxisSize: (args[1] as MainAxisSize?) ?? MainAxisSize.max,
-          crossAxisAlignment:
-              (args[2] as CrossAxisAlignment?) ?? CrossAxisAlignment.center,
-          textDirection: args[3] as TextDirection?,
-          verticalDirection:
-              (args[4] as VerticalDirection?) ?? VerticalDirection.down,
-          textBaseline: args[5] as TextBaseline?,
-          children: children,
-        );
-      case Axis.vertical:
-        return Column(
-          mainAxisAlignment:
-              (args[0] as MainAxisAlignment?) ?? MainAxisAlignment.start,
-          mainAxisSize: (args[1] as MainAxisSize?) ?? MainAxisSize.max,
-          crossAxisAlignment:
-              (args[2] as CrossAxisAlignment?) ?? CrossAxisAlignment.center,
-          textDirection: args[3] as TextDirection?,
-          verticalDirection:
-              (args[4] as VerticalDirection?) ?? VerticalDirection.down,
-          textBaseline: args[5] as TextBaseline?,
-          children: children,
-        );
-    }
-  }
+  const Width([double value = 0]) : super(width: value);
 }
 
 /// A widget that intersperse a group of children with a separator.
@@ -659,7 +776,10 @@ class Group extends StatelessWidget {
 /// The following usages are equivalent:
 ///
 /// ```dart
-/// Separated.col([], Divider())
+/// // fluttils:
+/// // flutter:
+
+/// Separated.col([], separator: Divider())
 /// Column()
 ///
 /// Separated.row([Text("1")], Divider())
@@ -671,24 +791,77 @@ class Group extends StatelessWidget {
 /// Separated.row([Text("1"), Text("2"), Text("3")], Divider())
 /// Row(children: [Text("1"), Divider(), Text("2"), Divider(), Text("3")])
 /// ```
-class Separated extends Group {
-  static List<Widget> _separate(Widget separator, List<Widget> children) {
-    if (children.isEmpty) return [];
-    return List.generate(2 * children.length - 1,
-        (i) => i % 2 == 0 ? children[i ~/ 2] : separator);
-  }
+class Separated extends f.StatelessWidget {
+  final f.Axis direction;
+  final List<f.Widget> children;
+  final f.Widget separator;
+  final f.MainAxisSize mainAxisSize;
+  final f.MainAxisAlignment mainAxisAlignment;
+  final f.CrossAxisAlignment crossAxisAlignment;
+
+  const Separated._(
+    this.children, {
+    f.Key? key,
+    required this.direction,
+    required this.separator,
+    this.mainAxisSize = f.MainAxisSize.max,
+    this.mainAxisAlignment = f.MainAxisAlignment.start,
+    this.crossAxisAlignment = f.CrossAxisAlignment.center,
+  }) : super(key: key);
 
   /// Creates a interspersed, vertical array of [children] with a given
   /// [separator].
-  ///
-  /// The [attrs] parameter has the same effect as passing it on [Group].
-  Separated.col(List<Widget> children, Widget separator, {Object? attrs})
-      : super.col(_separate(separator, children), attrs: attrs);
+  const Separated.col(
+    List<f.Widget> children, {
+    f.Key? key,
+    required f.Widget separator,
+    f.MainAxisSize mainAxisSize = f.MainAxisSize.max,
+    f.MainAxisAlignment mainAxisAlignment = f.MainAxisAlignment.start,
+    f.CrossAxisAlignment crossAxisAlignment = f.CrossAxisAlignment.center,
+  }) : this._(children,
+            key: key,
+            direction: f.Axis.vertical,
+            separator: separator,
+            mainAxisSize: mainAxisSize,
+            mainAxisAlignment: mainAxisAlignment,
+            crossAxisAlignment: crossAxisAlignment);
 
   /// Creates a interspersed, horizontal array of [children] with a given
   /// [separator].
-  ///
-  /// The [attrs] parameter has the same effect as passing it on [Group].
-  Separated.row(List<Widget> children, Widget separator, {Object? attrs})
-      : super.row(_separate(separator, children), attrs: attrs);
+  const Separated.row(
+    List<f.Widget> children, {
+    f.Key? key,
+    required f.Widget separator,
+    f.MainAxisSize mainAxisSize = f.MainAxisSize.max,
+    f.MainAxisAlignment mainAxisAlignment = f.MainAxisAlignment.start,
+    f.CrossAxisAlignment crossAxisAlignment = f.CrossAxisAlignment.center,
+  }) : this._(children,
+            key: key,
+            direction: f.Axis.horizontal,
+            separator: separator,
+            mainAxisSize: mainAxisSize,
+            mainAxisAlignment: mainAxisAlignment,
+            crossAxisAlignment: crossAxisAlignment);
+
+  @override
+  f.Widget build(f.BuildContext context) {
+    return Provider<List<f.Widget>>(
+      create: (_) {
+        if (children.isEmpty) return [];
+        return List.generate(
+          2 * children.length - 1,
+          (i) => i % 2 == 0 ? children[i ~/ 2] : separator,
+        );
+      },
+      child: Consumer<List<f.Widget>>(
+        builder: (context, children, _) => f.Flex(
+          direction: direction,
+          mainAxisSize: mainAxisSize,
+          mainAxisAlignment: mainAxisAlignment,
+          crossAxisAlignment: crossAxisAlignment,
+          children: children,
+        ),
+      ),
+    );
+  }
 }

@@ -6,6 +6,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > :warning: represents a breaking change
 
+## [4.0.0] - 2022-03-08
+### Added
+- `MappedListView` widget
+- `short` factory constructor to `SplashScreen` widget
+- `provider` as a dependency
+- `FutureBuilder` and `StreamBuilder` now support error handling with error and stacktrace
+
+### Changed
+- Make all widgets available as constants
+- `TapOutsideToUnfocus` is now called `ContextUnfocuser`
+- `Visibility` widget is now controlled by a `VisibilityLevel`
+- `SplashScreen` widget now builds the result in-place instead of pushing a new route 
+- `Text` widget now supports `TextAlign` as parameter
+- `Height` and `Width` single-parameters are now default to zero instead of infinity
+ 
+### Removed
+- `Group` widget
+- `SimpleSplashScreen` widget
+- `OnDemandListView` widget
+- Prefix "Simple" from widgets, preferring an import alias as alternative
+- Default values for button texts on custom dialogs
+
+
 ## [2.0.0] - 2021-06-27
 ### Changed
 - Migrate to null-safety
