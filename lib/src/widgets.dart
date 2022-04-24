@@ -46,14 +46,14 @@ class Text extends f.StatelessWidget {
 
   @override
   f.Widget build(f.BuildContext context) {
-    return Provider<_TextAttrs>(
-      create: (_) {
+    return ProxyProvider0<_TextAttrs>(
+      update: (context, _) {
         final List<Object>? attrs = attributes;
         final List<Object?> args = List.generate(7, (_) => null);
         if (attrs == null) return _TextAttrs.empty();
-        if (attrs.isEmpty)
+        if (attrs.isEmpty) {
           return _TextAttrs(style: f.TextStyle(), textAlign: null);
-
+        }
         for (Object attribute in attrs) {
           final int? i = () {
             if (attribute is f.FontWeight) return 0;
@@ -420,8 +420,8 @@ class Padding extends f.StatelessWidget {
 
   @override
   f.Widget build(f.BuildContext context) {
-    return Provider<EdgeInsets>(
-      create: (_) => EdgeInsets(
+    return ProxyProvider0<EdgeInsets>(
+      update: (context, _) => EdgeInsets(
         all: all,
         width: width,
         height: height,
@@ -845,8 +845,8 @@ class Separated extends f.StatelessWidget {
 
   @override
   f.Widget build(f.BuildContext context) {
-    return Provider<List<f.Widget>>(
-      create: (_) {
+    return ProxyProvider0<List<f.Widget>>(
+      update: (context, _) {
         if (children.isEmpty) return [];
         return List.generate(
           2 * children.length - 1,
