@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > :warning: represents a breaking change
 
+## [4.0.1] - 2022-04-24
+### Fixed
+- Make this library compatible with hot reload by using `ProxyProvider0` instead of `Provider`
+
+
 ## [4.0.0] - 2022-03-08
 ### Added
 - `MappedListView` widget
